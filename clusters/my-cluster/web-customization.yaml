@@ -4,6 +4,7 @@ metadata:
   name: web-app
   namespace: flux-system
 spec:
+  suspend: true 
   interval: 1m
   path: ./apps/web
   prune: true
