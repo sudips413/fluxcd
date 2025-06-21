@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <title>FluxCD Manual Deploy & Monitor</title>
   <style>
-    /* Reset & base */
     * {
       box-sizing: border-box;
     }
@@ -25,34 +24,49 @@
       text-align: center;
     }
 
-    /* Buttons */
-    #deployBtn {
+    .platform {
+      background: white;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .platform h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      color: #1e40af;
+    }
+
+    .platform p {
+      margin: 0.5rem 0;
+      font-size: 0.95rem;
+    }
+
+    .deploy-button {
       background: #2d89ff;
       border: none;
       color: white;
-      font-size: 1.2rem;
-      padding: 1rem 2.5rem;
+      font-size: 0.95rem;
+      padding: 0.5rem 1.2rem;
       border-radius: 6px;
       cursor: pointer;
       transition: background-color 0.3s ease;
-      align-self: center;
-      box-shadow: 0 4px 8px rgb(45 137 255 / 0.3);
-      margin-bottom: 1rem;
+      margin-top: 0.5rem;
     }
-    #deployBtn:hover {
+
+    .deploy-button:hover {
       background: #1a5fd8;
     }
 
-    /* Status */
     #status {
       text-align: center;
       font-weight: 600;
-      margin-bottom: 1.5rem;
+      margin: 1rem 0;
       font-size: 1.1rem;
       color: #444;
     }
 
-    /* Monitoring output container */
     #monitoring-output {
       flex-grow: 1;
       display: grid;
@@ -61,7 +75,6 @@
       padding: 1rem;
     }
 
-    /* Each resource section */
     #monitoring-output h3 {
       margin-top: 0;
       color: #1e3a8a;
@@ -70,22 +83,19 @@
       margin-bottom: 0.5rem;
     }
 
-    #monitoring-output pre {
-      background: #1e293b;
-      color: #cbd5e1;
-      padding: 1rem;
-      border-radius: 8px;
-      overflow-x: auto;
-      max-height: 300px;
-      box-shadow: 0 2px 6px rgb(30 41 59 / 0.4);
-      font-family: 'Fira Mono', monospace, monospace;
-      font-size: 0.9rem;
-      line-height: 1.4;
-      white-space: pre-wrap;
-      word-wrap: break-word;
+    #monitoring-output ul {
+      list-style: none;
+      padding-left: 1rem;
     }
 
-    /* Responsive tweaks */
+    #monitoring-output li {
+      background: #e2e8f0;
+      padding: 0.4rem 0.7rem;
+      border-radius: 4px;
+      margin-bottom: 0.4rem;
+      font-family: monospace;
+    }
+
     @media (max-width: 600px) {
       body {
         padding: 1rem;
@@ -93,70 +103,112 @@
       #monitoring-output {
         grid-template-columns: 1fr;
       }
-      #deployBtn {
-        width: 100%;
-      }
     }
   </style>
 </head>
 <body>
   <h1>FluxCD Manual Deploy & Monitor</h1>
 
-  <button id="deployBtn">Deploy Now</button>
-  <div id="status"></div>
+  <div id="status">Loading platforms...</div>
+  <div id="platform-list"></div>
+
+  <hr style="margin: 2rem 0; border: none; border-top: 1px solid #ccc;">
+
   <div id="monitoring-output"></div>
 
   <script>
-    const deployBtn = document.getElementById('deployBtn');
     const statusDiv = document.getElementById('status');
     const monitoringOutput = document.getElementById('monitoring-output');
+    const platformList = document.getElementById('platform-list');
 
-    deployBtn.addEventListener('click', () => {
-      statusDiv.textContent = '🚀 Triggering deployment...';
-      fetch('/deploy', { method: 'POST' })
+    function loadPlatforms() {
+      fetch('/platforms')
         .then(res => res.json())
         .then(data => {
-          statusDiv.textContent = data.status === 'success' ? data.message : '❌ ' + data.message;
+          if (data.status === 'success') {
+            statusDiv.textContent = `✅ ${data.platforms.length} platforms loaded`;
+            platformList.innerHTML = '';
+
+            data.platforms.forEach(platform => {
+              const div = document.createElement('div');
+              div.className = 'platform';
+              div.innerHTML = `
+                <h2>${platform.name}</h2>
+                <p><strong>Namespace:</strong> ${platform.targetNamespace}</p>
+                <p><strong>Status:</strong> ${platform.status}</p>
+                <p><strong>Message:</strong> ${platform.message}</p>
+                <button class="deploy-button" onclick="triggerDeploy('${platform.name}')">Trigger Deploy</button>
+              `;
+              platformList.appendChild(div);
+            });
+          } else {
+            statusDiv.textContent = '❌ Failed to load platforms: ' + data.message;
+          }
         })
         .catch(err => {
           statusDiv.textContent = '❌ Error: ' + err;
         });
-    });
+    }
 
-    const REFRESH_INTERVAL = 10; // seconds
-    let countdown = REFRESH_INTERVAL;
+    function triggerDeploy(name) {
+      statusDiv.textContent = `🚀 Triggering deployment for ${name}...`;
+      fetch('/deploy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      })
+      .then(res => res.json())
+      .then(data => {
+        statusDiv.textContent = data.status === 'success' ? data.message : '❌ ' + data.message;
+      })
+      .catch(err => {
+        statusDiv.textContent = '❌ Error: ' + err;
+      });
+    }
+
+    function renderListSection(title, items, renderFn) {
+      if (!items || items.length === 0) return '';
+      return `
+        <section>
+          <h3>${title}</h3>
+          <ul>
+            ${items.map(renderFn).join('')}
+          </ul>
+        </section>
+      `;
+    }
 
     function fetchClusterStatus() {
       fetch('/cluster-status')
         .then(res => res.json())
         .then(data => {
           if (data.status === 'success') {
-            statusDiv.textContent = `📡 Live cluster status updated — next update in ${countdown}s`;
+            if (statusDiv.textContent.includes('next update in')) {
+              statusDiv.textContent = statusDiv.textContent.replace(/next update in \d+s/, `next update in ${countdown}s`);
+            } else {
+              statusDiv.textContent = `📡 Live cluster status updated — next update in ${countdown}s`;
+            }
+
             monitoringOutput.innerHTML = `
-              <section>
-                <h3>Pods</h3>
-                <pre>${JSON.stringify(data.pods, null, 2)}</pre>
-              </section>
+              ${renderListSection('Pods', data.pods, pod => `
+                <li><strong>${pod.name}</strong> — ${pod.status}, node: ${pod.node}</li>
+              `)}
 
-              <section>
-                <h3>Services</h3>
-                <pre>${JSON.stringify(data.services, null, 2)}</pre>
-              </section>
+              ${renderListSection('Services', data.services, svc => `
+                <li><strong>${svc.name}</strong> — ${svc.type} @ ${svc.cluster_ip}, ports: ${svc.ports.join(', ')}</li>
+              `)}
 
-              <section>
-                <h3>Deployments</h3>
-                <pre>${JSON.stringify(data.deployments, null, 2)}</pre>
-              </section>
+              ${renderListSection('Deployments', data.deployments, dep => `
+                <li><strong>${dep.name}</strong> — ${dep.ready_replicas}/${dep.replicas} ready</li>
+              `)}
 
-              <section>
-                <h3>ReplicaSets</h3>
-                <pre>${JSON.stringify(data.replicasets, null, 2)}</pre>
-              </section>
+              ${renderListSection('ReplicaSets', data.replicasets, rs => `
+                <li><strong>${rs.name}</strong> — ${rs.ready_replicas}/${rs.replicas} ready</li>
+              `)}
 
-              <section>
-                <h3>StatefulSets</h3>
-                <pre>${JSON.stringify(data.statefulsets, null, 2)}</pre>
-              </section>
+              ${renderListSection('StatefulSets', data.statefulsets, ss => `
+                <li><strong>${ss.name}</strong> — ${ss.ready_replicas}/${ss.replicas} ready</li>
+              `)}
             `;
           } else {
             statusDiv.textContent = '❌ ' + data.message;
@@ -167,21 +219,22 @@
         });
     }
 
-    // Countdown timer that updates every second
+    const REFRESH_INTERVAL = 10;
+    let countdown = REFRESH_INTERVAL;
+
     setInterval(() => {
       countdown--;
       if (countdown <= 0) {
         fetchClusterStatus();
         countdown = REFRESH_INTERVAL;
       } else {
-        // Update countdown text only if last update succeeded
-        if (statusDiv.textContent.includes('Live cluster status updated')) {
+        if (statusDiv.textContent.includes('next update in')) {
           statusDiv.textContent = statusDiv.textContent.replace(/next update in \d+s/, `next update in ${countdown}s`);
         }
       }
-    }, 400);
+    }, 1000);
 
-    // Initial load
+    loadPlatforms();
     fetchClusterStatus();
   </script>
 </body>
