@@ -1,37 +1,39 @@
-- apiVersion: v1
-  kind: Namespace
-  metadata:
-    name: dn-cueweb
-- apiVersion: apps/v1
-  kind: Deployment
-  metadata:
-    name: sample-app
-    namespace: dn-cueweb
-  spec:
-    replicas: 2
-    selector:
-      matchLabels:
-        app: sample
-    template:
-      metadata:
-        labels:
-          app: sample
-      spec:
-        containers:
-          - name: sample
-            image: nginx:latest
-            ports:
-              - containerPort: 80
-- apiVersion: v1
-  kind: Service
-  metadata:
-    name: sample-service
-    namespace: dn-cueweb
-  spec:
-    type: NodePort
-    selector:
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dn-cueweb
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-app
+  namespace: dn-cueweb
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
       app: sample
-    ports:
-      - port: 80
-        targetPort: 80
-        nodePort: 32100
+  template:
+    metadata:
+      labels:
+        app: sample
+    spec:
+      containers:
+        - name: sample
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sample-service
+  namespace: dn-cueweb
+spec:
+  type: NodePort
+  selector:
+    app: sample
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 32100
