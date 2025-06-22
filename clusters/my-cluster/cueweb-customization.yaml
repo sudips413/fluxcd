@@ -6,7 +6,7 @@ metadata:
 spec:
   suspend: false 
   interval: 1m
-  path: ./apps/cueweb
+  path: ./apps/cueWeb
   prune: true
   sourceRef:
     kind: GitRepository
