@@ -4,5 +4,7 @@ metadata:
   name: bitnami
   namespace: flux-system
 spec:
+  force: true
+  suspend: false  # Set to true to pause the reconciliation of this HelmRepository
   interval: 30m
   url: https://charts.bitnami.com/bitnami
