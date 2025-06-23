@@ -4,7 +4,7 @@ metadata:
   name: cueweb-app
   namespace: flux-system
 spec:
-  suspend: false 
+  suspend: true 
   interval: 1m
   path: ./apps/cueWeb
   prune: true
