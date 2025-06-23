@@ -1,56 +1,55 @@
 package k8s
 
-import "encoding/yaml"
+import (
+  "encoding/yaml"
+  "k8s.io/kube" // optional for CRD validation, can be ignored
+)
 
-// Namespace definition
+parameters: _
+
 namespace: {
   apiVersion: "v1"
   kind:       "Namespace"
-  metadata: {
-    name: "dn-cueweb"
-  }
+  metadata: name: parameters.namespace
 }
 
-// Deployment definition
 deployment: {
   apiVersion: "apps/v1"
   kind:       "Deployment"
   metadata: {
-    name:      "sample-app"
-    namespace: "dn-cueweb"
+    name:      parameters.name
+    namespace: parameters.namespace
   }
   spec: {
-    replicas: 2
-    selector: matchLabels: app: "sample"
+    replicas: parameters.replicas
+    selector: matchLabels: app: parameters.name
     template: {
-      metadata: labels: app: "sample"
+      metadata: labels: app: parameters.name
       spec: containers: [{
-        name:  "sample"
-        image: "nginx:latest"
+        name:  parameters.name
+        image: parameters.image
         ports: [{ containerPort: 80 }]
       }]
     }
   }
 }
 
-// Service definition (NodePort)
 service: {
   apiVersion: "v1"
   kind:       "Service"
   metadata: {
-    name:      "sample-service"
-    namespace: "dn-cueweb"
+    name:      parameters.name + "-svc"
+    namespace: parameters.namespace
   }
   spec: {
     type: "NodePort"
-    selector: app: "sample"
+    selector: app: parameters.name
     ports: [{
       port:       80
       targetPort: 80
-      nodePort:   32100
+      nodePort:   parameters.nodePort
     }]
   }
 }
 
-// Marshal all resources to YAML
 output: yaml.Marshal([namespace, deployment, service])
