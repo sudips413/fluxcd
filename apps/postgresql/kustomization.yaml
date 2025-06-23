@@ -1,4 +1,5 @@
 resources:
+  - HelmRepo.yaml
   - namespace.yaml
   - HelmRelease.yaml
-  - HelmRepo.yaml
+  
