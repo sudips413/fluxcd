@@ -4,16 +4,12 @@ metadata:
   name: postgresql
   namespace: flux-system
 spec:
-  suspend: true
-  interval: 5m
-  path: ./apps/postgresql
+  suspend: true  # Set to true to pause the reconciliation of this Kustomization
+  interval: 1m
+  path: ./apps/postgresql   # Path to manifests/HelmRelease in your repo
   prune: true
   sourceRef:
     kind: GitRepository
     name: flux-system
-    namespace: flux-system
-  timeout: 1m
-  # The targetNamespace is set to the namespace where the PostgreSQL resources will be deployed.
-  # This is typically the namespace where your database applications will run.
-  
   targetNamespace: dn-postgresql
+
