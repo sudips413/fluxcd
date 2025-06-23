@@ -1,0 +1,13 @@
+auth:
+  username: admin
+  password: admin
+  database: sudip
+
+primary:
+  service:
+    type: NodePort
+    nodePorts:
+      postgresql: 32101
+  persistence:
+    enabled: true
+    size: 1Gi

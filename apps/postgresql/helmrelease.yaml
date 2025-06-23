@@ -1,0 +1,25 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: postgresql
+  namespace: dn-postgresql
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: postgresql
+      version: "15.2.5"
+      sourceRef:
+        kind: HelmRepository
+        name: bitnami
+        namespace: flux-system
+  values:
+    architecture: standalone
+    auth:
+      username: admin
+      password: admin
+      database: sudip
+    primary:
+      service:
+        type: NodePort
+        nodePort: 30007  # Optional: fixed NodePort
